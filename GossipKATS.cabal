@@ -1,11 +1,22 @@
 name:          GossipKATS
+synopsis:      Simple implementation of NetKAT for Dynamic Gossip
 version:       0.1.0.0
 build-type:    Simple
-cabal-version: >= 1.2
+cabal-version: >= 1.6
+category:      Logic
 
 library
   ghc-options:      -Wall
   build-depends:    base >= 4.8 && < 5,
                     random,
                     graphviz
-  exposed-modules:  GossipKATS
+  exposed-modules:  NetKAT
+                  , Gossip
+                  , Datatypes
+                  , Visual
+                  , Examples
+                  , Helperfunctions
+
+source-repository head
+  type:             git
+  location:         https://github.com/janawagemaker/GossipKATS.git

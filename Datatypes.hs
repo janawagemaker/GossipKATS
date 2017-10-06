@@ -43,11 +43,11 @@ data Predicate = One
 
 data Policy = Filter Predicate
               | Mod Field Value
+              | Add Field Value
               | PCup [Policy]
               | PSeq [Policy]
               | Star Policy
               | Merge Field Field
-              | Call Switch Switch
               deriving (Eq, Ord)
 
 instance Show Predicate where
@@ -62,8 +62,8 @@ instance Show Predicate where
 instance Show Policy where
    show (Filter predi) = show predi
    show (Mod field value) = field ++ " ← " ++ show value
+   show (Add field value) = field ++ " ←+ " ++ show value
    show (PCup xs) = intercalate " + " (map show xs)
    show (PSeq xs) = "(" ++ intercalate " • " (map show xs) ++ ")"
    show (Star x) = show x ++ "*"
    show (Merge field switch) = "Merge (" ++ field ++ " , " ++ show switch ++ ")"
-   show (Call _ _) = ""
