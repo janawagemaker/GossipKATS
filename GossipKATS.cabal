@@ -7,15 +7,17 @@ category:      Logic
 
 library
   ghc-options:      -Wall
-  build-depends:    base >= 4.8 && < 5,
-                    random,
-                    graphviz
+  build-depends:    base >= 4.8 && < 5
+                  , random
+                  , graphviz
+                  , QuickCheck
   exposed-modules:  NetKAT
                   , Gossip
                   , Datatypes
                   , Visual
                   , Examples
                   , Helperfunctions
+                  , Random
 
 source-repository head
   type:             git
