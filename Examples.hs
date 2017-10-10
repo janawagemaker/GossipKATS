@@ -23,7 +23,7 @@ exampleMo2= Mo
 
 -- example packet when working with 3 agents
 examplePacket1 :: Packet
-examplePacket1 = [("ag", S a),("pt", P (Port 9)),("S" , LS []), ("N", LS []),
+examplePacket1 = [("ag", S a),("pt", P (Port 99999)),("S" , LS []), ("N", LS []),
                   ("Sa", LS [a]), ("Sb", LS [b]), ("Sc", LS [c]),
                   ("Na", LS [a,b]), ("Nb", LS [b,c]), ("Nc", LS [c]),
                   ("call", ST "")]

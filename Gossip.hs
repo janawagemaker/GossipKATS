@@ -31,30 +31,31 @@ showOutput mo pacst = putStrLn $ filteredOutput mo pacst
 filteredOutput:: NetKATM -> [Packet] -> String
 filteredOutput mo pacst =
   "These are successful call sequences:\n  "
-  ++ intercalate "\n  " successes
+  ++ intercalate "\n  " (map show successes)
   ++ "\nThese are not successful call sequences:\n  "
-  ++ intercalate "\n" failures where
+  ++ intercalate "\n" (map show failures) where
     failures = nub $ failString mo outputs
     outputs = niceOutput mo pacst
     successes = nub $ successString mo outputs
 
 niceOutput:: NetKATM -> [Packet] -> [Packet]
-niceOutput mo pacst = filter (\z -> isUnique (whatValueST (z ! "call")) (makeCallList $ callSequence mo pacst)) (callSequence mo pacst)
+niceOutput mo pacst = filter (\z -> isUnique (whatValueLC (z ! "call")) (makeCallList allseqs)) allseqs where
+  allseqs = callSequence mo pacst
 
-makeCallList:: [Packet] -> [String]
-makeCallList = map (\ x -> whatValueST (x ! "call"))
+makeCallList:: [Packet] -> [Sequence]
+makeCallList = map (\ x -> whatValueLC (x ! "call"))
 
-failString:: NetKATM -> [Packet] -> [String]
+failString:: NetKATM -> [Packet] -> [Sequence]
 failString _                []     = []
 failString (Mo h s p z e f) (x:xs) | null $ evalPol [x] (successPol s s (Mo h s p z e f))
-                                        =  whatValueST (x ! "call") : failString (Mo h s p z e f) xs
+                                        =  whatValueLC (x ! "call") : failString (Mo h s p z e f) xs
                                    | otherwise = failString (Mo h s p z e f) xs
 
-successString:: NetKATM -> [Packet] -> [String]
+successString:: NetKATM -> [Packet] -> [Sequence]
 successString _                []     = []
 successString (Mo h s p z e f) (x:xs) | null $ evalPol [x] (successPol s s (Mo h s p z e f))
                                           = successString (Mo h s p z e f) xs
-                                      | otherwise = whatValueST (x ! "call") : successString (Mo h s p z e f) xs
+                                      | otherwise = whatValueLC (x ! "call") : successString (Mo h s p z e f) xs
 
 -- A function generating a policy testing whether LNS was successful
 successPol:: [Switch] -> [Switch] -> NetKATM -> Policy
@@ -121,7 +122,7 @@ callPolPort:: Port -> Switch -> Internallinks -> [(Switch, [Port])] -> Policy
 callPolPort p s z = loop where
   loop:: [(Switch, [Port])] -> Policy
   loop [] = Filter Zero
-  loop (v:vs) = PCup [ PSeq   [ Add "call" $ ST ("," ++ show s ++ show (destination s p z))
+  loop (v:vs) = PCup [ PSeq   [ Add "call" $ LC [(s,destination s p z)]
                               , intLink p s z
                               , Merge "S" (makeString "S" (destination s p z))
                               , Merge "N" (makeString "N" (destination s p z))
@@ -167,19 +168,17 @@ check p s (((f,v),(w,t)):zs) | (s,p) == (w,t) = PSeq [ Filter (Test "ag" (S s))
 
 transfer :: GossipGraph -> Packet
 transfer [] = []
-transfer ((x,(y,z)):xs) = [ ("ag", S x)
-                          , ("pt", P (head ports))
-                          , ("S", LS [])
-                          , ("N", LS [])
-                          , (makeString "S" x, LS z)
-                          , (makeString "N" x, LS y)
-                          , ("call", ST "") ]
-      ++ others xs where
-        ports = map Port [1..(length gg * length gg)]
-        gg = (x,(y,z)):xs
+transfer xs = [ ("ag", undefined)
+              , ("pt", undefined)
+              , ("S", LS [])
+              , ("N", LS [])
+              , ("call", LC [])
+              ]
+        ++ graphToFields xs
 
-others:: GossipGraph -> [(Field, Value)]
-others [] = []
-others ((x,(y,z)):xs) = [(makeString "S" x, LS z),
-                         (makeString "N" x, LS y)]
-                ++ others xs
+graphToFields:: GossipGraph -> [(Field, Value)]
+graphToFields gg = concat
+  [ [("S" ++ show x, LS z), ("N" ++ show x, LS y)] | (x,(y,z)) <- gg ]
+
+thegoal :: GossipGraph -> [ [(Switch,Switch)] ]
+thegoal gg = nub $ map (\p -> whatValueLC (p ! "call")) $ niceOutput (netkatmFor (length gg)) [transfer gg]

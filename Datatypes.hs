@@ -18,8 +18,9 @@ data NetKATM = Mo
     [((Switch,Port),(Switch,Port))]
     [(Host,Port)] deriving (Eq,Show)
 
+type Sequence = [(Switch,Switch)]
 type Field = String
-data Value = S Switch | LS [Switch] | P Port | ST String deriving (Eq,Ord,Show)
+data Value = S Switch | LS [Switch] | P Port | ST String | LC Sequence deriving (Eq,Ord,Show)
 type Packet = [(Field,Value)]
 type Element = Switch
 type Item = (Switch,([Switch],[Switch]))

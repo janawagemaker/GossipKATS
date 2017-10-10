@@ -16,7 +16,8 @@ update :: Field -> Value -> Packet -> Packet
 update f v p = [ (g, if g==f then v else w) | (g,w) <- p ]
 
 addValue :: Field -> Value -> Packet -> Packet
-addValue f (ST  adds) p = [ (g, if g==f then ST  (whatValueST  w ++ adds) else w) | (g,w) <- p ]
+addValue f (ST  adds) p = [ (g, if g==f then ST (whatValueST w ++ adds) else w) | (g,w) <- p ]
+addValue f (LC  seqs) p = [ (g, if g==f then LC (whatValueLC w ++ seqs) else w) | (g,w) <- p ]
 addValue _ _          _ = error "can not add to this field"
 
 mergeField:: Field -> Field -> Packet -> Packet
@@ -29,7 +30,11 @@ whatValue _      = error "not the right type"
 
 whatValueST :: Value -> String
 whatValueST (ST w) = w
-whatValueST _      = error "not the right type"
+whatValueST v      = error "not the right type: " ++ show v
+
+whatValueLC :: Value -> Sequence
+whatValueLC (LC cs) = cs
+whatValueLC _       = error "not the right type"
 
 lfp :: Eq a => (a -> a) -> a -> a
 lfp f x | x == f x  = x
@@ -45,12 +50,12 @@ makeString f x = f ++ show x
 indent :: String
 indent = "   "
 
-isUnique:: String -> [String] -> Bool
+isUnique:: Eq a => [a] -> [[a]] -> Bool
 isUnique _ []      = True
 isUnique x (v:vs) | myPrefix x v = False
                   | otherwise    = isUnique x vs
 
-myPrefix :: String -> String -> Bool
+myPrefix :: Eq a=> [a] -> [a] -> Bool
 myPrefix [] [] = False
 myPrefix [] _  = True
 myPrefix _  [] = False
