@@ -1,4 +1,4 @@
-module Gossip where
+module GossipNetKAT where
 
 import Data.List
 import Data.Maybe
@@ -178,7 +178,7 @@ transfer xs = [ ("ag", undefined)
 
 graphToFields:: GossipGraph -> [(Field, Value)]
 graphToFields gg = concat
-  [ [("S" ++ show x, LS z), ("N" ++ show x, LS y)] | (x,(y,z)) <- gg ]
+  [ [("N" ++ show x, LS nRel), ("S" ++ show x, LS sRel)] | (x,(nRel,sRel)) <- gg ]
 
-thegoal :: GossipGraph -> [ [(Switch,Switch)] ]
-thegoal gg = nub $ map (\p -> whatValueLC (p ! "call")) $ niceOutput (netkatmFor (length gg)) [transfer gg]
+lnsSequencesViaNetKAT :: GossipGraph -> [Sequence]
+lnsSequencesViaNetKAT gg = nub $ map (\p -> whatValueLC (p ! "call")) $ niceOutput (netkatmFor (length gg)) [transfer gg]

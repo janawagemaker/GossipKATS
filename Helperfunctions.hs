@@ -43,6 +43,12 @@ lfp f x | x == f x  = x
 (!) :: Eq a => [(a,b)] -> a -> b
 (!) rel x = fromJust $ lookup x rel
 
+sortNubUnion :: (Ord a, Eq a) => [a] -> [a] -> [a]
+sortNubUnion xs ys = sort . nub $ xs ++ ys
+
+sortNubEqual :: (Ord a, Eq a) => [a] -> [a] -> Bool
+sortNubEqual xs ys = sort (nub xs) == sort (nub ys)
+
 makeString:: Field -> Switch -> String
 makeString f x = f ++ show x
 

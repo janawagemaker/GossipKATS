@@ -12,7 +12,8 @@ library
                   , graphviz
                   , QuickCheck
   exposed-modules:  NetKAT
-                  , Gossip
+                  , GossipNetKAT
+                  , GossipExplicit
                   , Datatypes
                   , Visual
                   , Examples

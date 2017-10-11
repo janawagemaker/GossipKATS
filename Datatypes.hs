@@ -1,6 +1,8 @@
 module Datatypes where
 import Data.List
 
+-- types and constants for NetKAT
+
 newtype Host = Host Int deriving (Eq,Ord,Show)
 newtype Port = Port Int deriving (Eq,Ord,Show)
 newtype Switch = Switch Int deriving (Eq,Ord)
@@ -18,13 +20,11 @@ data NetKATM = Mo
     [((Switch,Port),(Switch,Port))]
     [(Host,Port)] deriving (Eq,Show)
 
-type Sequence = [(Switch,Switch)]
 type Field = String
 data Value = S Switch | LS [Switch] | P Port | ST String | LC Sequence deriving (Eq,Ord,Show)
 type Packet = [(Field,Value)]
 type Element = Switch
-type Item = (Switch,([Switch],[Switch]))
-type GossipGraph = [Item]
+type Item = (Switch,([Switch],[Switch])) -- (agent,(N-Relation,S-Relation))
 
 instance Show Switch where
     show (Switch 0) = "a";
@@ -68,3 +68,10 @@ instance Show Policy where
    show (PSeq xs) = "(" ++ intercalate " • " (map show xs) ++ ")"
    show (Star x) = show x ++ "*"
    show (Merge field switch) = "Merge (" ++ field ++ " , " ++ show switch ++ ")"
+
+-- types for dynamic gossip
+
+type Agent = Switch
+type GossipGraph = [Item]
+type Call = (Switch,Switch)
+type Sequence = [Call]
