@@ -49,6 +49,16 @@ gossipExample = [ (a,([a,b],[a]))
                 , (b,([b,c],[b]))
                 , (c,([c],[c])) ]
 
+gossipExampleFour:: GossipGraph
+gossipExampleFour = [ (a,([a,b],[a]))
+                    , (b,([b,c],[b]))
+                    , (c,([c,d],[c]))
+                    , (d, ([d],[d])) ]
+
+gossipExample4:: GossipGraph
+gossipExample4 = [ (a,([a,b],[a]))
+                , (b,([b],[b]))]
+
 gossipExample2:: GossipGraph
 gossipExample2 = [ (a,([a,b],[a]))
                  , (b,([b,c],[b]))

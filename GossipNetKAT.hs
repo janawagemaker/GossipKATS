@@ -10,7 +10,7 @@ import Helperfunctions
 -- Running the LNS protocol on an input packet and a given netkat model, output not pretty
 callSequence :: NetKATM -> [Packet] -> [Packet]
 callSequence mo packstate = evalPol packstate (PSeq [polDistributeSimple mo,
-                                                Star (PSeq [genModelSimple mo, genCallSimple mo])])
+                                                Star (polLNS mo)])
 
 -- creating the first part of the call policy where the first packet is distributed
 polDistribute :: NetKATM -> Policy
@@ -63,7 +63,44 @@ successPol [] _ _ = Filter One
 successPol (s:ws) x mo = PSeq [ Filter (Test (makeString "S" s) (LS x))
                               , successPol ws x mo ] -- FIXME this is not actually using mo?
 
--- generating pol_1 -- FIXME rename
+-- a new LNS policy generator in one part
+
+polLNS:: NetKATM -> Policy
+polLNS (Mo _ p _ z _ _) = (createPol p z z)
+
+createPol:: [Switch] -> [(Switch, [Port])] -> [(Switch, [Port])] -> Policy
+createPol _ [] _         = Filter Zero
+createPol [] _ _         = error "no switches"
+createPol t ((s,p):xs) z = PCup [perSwitch t (s,p) z, createPol t xs z]
+
+perSwitch:: [Switch] -> (Switch, [Port]) -> [(Switch, [Port])] -> Policy
+perSwitch [] _ _          = Filter Zero
+perSwitch (w:ws) (s, p) v | w == s = perSwitch ws (s,p) v
+                          | otherwise = PCup [distrSwitch w (s,p) v, perSwitch ws (s,p) v]
+
+distrSwitch:: Switch -> (Switch, [Port]) -> [(Switch, [Port])] -> Policy
+distrSwitch _ _ []         = Filter Zero
+distrSwitch w (s,p) (v:vs) = PCup [ PSeq [ Filter (Test "ag" (S s)),
+                                           Filter (Test "pt" (P (head p))),
+                                           Merge "S" (makeString "S" s),
+                                           Merge "N" (makeString "N" s),
+                                           Filter (Neg (TestEl "S" w)),
+                                           Filter (TestEl "N" w),
+                                           Add "call" $ LC [(s, w)],
+                                           Merge "S" (makeString "S" w),
+                                           Merge "N" (makeString "N" w),
+                                           Merge "S" (makeString "S" s),
+                                           Merge "N" (makeString "N" s),
+                                           Mod "S" (LS []),
+                                           Mod "N" (LS []),
+                                           Mod "ag" (S (fst v)),
+                                           Mod "pt" (P (head (snd v))) ]
+                                           , distrSwitch w (s,p) vs]
+
+-- generating the first part of the call policy,
+-- where the packet is distributed to the right ports of an agent
+--(the ports connected to agents he will call)
+
 genModel:: NetKATM -> Policy
 genModel (Mo _ p _ z e _) = genForward p z e
 
@@ -100,7 +137,9 @@ genForwardSwitch ws (s,p) z = loop ws where
                                   , loop vs ]
 
 
--- | generating pol_2 -- FIXME rename
+-- | generating the second part of the call policy, creating a policy
+-- that models every possible call that can occur
+
 genCall:: NetKATM -> Policy
 genCall (Mo _ p _ z e _) =  makePolCall p z e
 
@@ -122,7 +161,7 @@ callPolPort:: Port -> Switch -> Internallinks -> [(Switch, [Port])] -> Policy
 callPolPort p s z = loop where
   loop:: [(Switch, [Port])] -> Policy
   loop [] = Filter Zero
-  loop (v:vs) = PCup [ PSeq   [ Add "call" $ LC [(s,destination s p z)]
+  loop (v:vs) = PCup [ PSeq   [ Add "call" $ LC [(s, destination s p z)]
                               , intLink p s z
                               , Merge "S" (makeString "S" (destination s p z))
                               , Merge "N" (makeString "N" (destination s p z))
@@ -135,10 +174,6 @@ callPolPort p s z = loop where
                               , Mod "ag" (S (fst v))
                               , Mod "pt" (P (head (snd v))) ]
                         , loop vs]
-
--- FIXME drop this?
-callString :: Port -> Switch -> Internallinks  -> String
-callString p s z = show s ++  " calls " ++ show (destination s p z)
 
 destination :: Switch -> Port -> Internallinks -> Switch
 destination s p z | isNothing (lookup (s, p) z) = checksecond s p z
@@ -168,8 +203,8 @@ check p s (((f,v),(w,t)):zs) | (s,p) == (w,t) = PSeq [ Filter (Test "ag" (S s))
 
 transfer :: GossipGraph -> Packet
 transfer [] = []
-transfer xs = [ ("ag", undefined)
-              , ("pt", undefined)
+transfer xs = [ ("ag", S a)
+              , ("pt", P (Port 1))
               , ("S", LS [])
               , ("N", LS [])
               , ("call", LC [])
