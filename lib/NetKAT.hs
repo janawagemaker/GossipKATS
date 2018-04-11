@@ -11,12 +11,11 @@ evalPred [] _            = []
 evalPred xs One          = xs
 evalPred _  Zero         = []
 evalPred xs (Test g w)   = [ x | x <- xs, x ! g == w ]
-evalPred xs (TestEl g w) = [ x | x <- xs, w `elem` whatValue (x ! g) ]
 evalPred _  (Cup [])     = []
 evalPred xs (Cup (p:ps)) = evalPred xs p ++ evalPred xs (Cup ps)
 evalPred xs (Seq [])     = evalPred xs One
 evalPred xs (Seq (p:ps)) = evalPred (evalPred xs p) (Seq ps)
-evalPred xs (Neg predi)  = [ x | x <- xs, null (evalPred [x] predi) ] -- is this the same?
+evalPred xs (Neg predi)  = [ x | x <- xs, null (evalPred [x] predi) ]
 
 -- | Evaluate a policy
 evalPol :: [Packet] -> Policy -> [Packet]
@@ -31,7 +30,6 @@ evalPol xs (PSeq (p:ps))  = evalPol (evalPol xs p) (PSeq ps)
 evalPol xs (Star pol)     = lfp extend xs where
   extend :: [Packet] -> [Packet]
   extend ps = nub $ ps ++ evalPol ps pol
-evalPol xs (Merge f s)    = map (mergeField s f . mergeField f s) xs
 
 -- | Verbosely evaluate a Policy
 verboseEvalPol :: String -> [Packet] -> Policy -> IO [Packet]
@@ -73,11 +71,6 @@ verboseEvalPol prefix xs (Star pol) = do
         when (ps /= newps) $ mapM_ print (newps \\ ps)
         when (ps == newps) $ putStrLn " So we found the fixpoint!"
         return newps
-verboseEvalPol prefix xs (Merge f s) = do
-    putStr $ prefix ++ "Merging field " ++ f ++ " with " ++ show s ++ " ... "
-    let newxs = map (mergeField s f . mergeField f s) xs
-    putStrLn $ "new " ++ f ++ " and " ++ s ++ " values in different tuples: " ++ show [ psv ! f | psv <- newxs ]
-    return $ map (mergeField s f . mergeField f s) xs
 
 -- | Generate a specific NetKAT model for n hosts and switches
 netkatmFor :: Int -> NetKATM

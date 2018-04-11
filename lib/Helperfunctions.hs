@@ -52,20 +52,12 @@ sortNubEqual xs ys = sort (nub xs) == sort (nub ys)
 makeString:: Field -> Switch -> String
 makeString f x = f ++ show x
 
+makeStringT:: Field -> Switch -> Switch -> String
+makeStringT f x y = f ++ show x ++ show y
+
 -- | Indent with three spaces
 indent :: String
 indent = "   "
-
-isUnique:: Eq a => [a] -> [[a]] -> Bool
-isUnique _ []      = True
-isUnique x (v:vs) | myPrefix x v = False
-                  | otherwise    = isUnique x vs
-
-myPrefix :: Eq a=> [a] -> [a] -> Bool
-myPrefix [] [] = False
-myPrefix [] _  = True
-myPrefix _  [] = False
-myPrefix (x:xs) (y:ys) = (x == y) && myPrefix xs ys
 
 -- simplifying policies
 simplify :: Policy -> Policy
@@ -78,11 +70,19 @@ simStep (Add field value)  = Add field value
 simStep (PSeq [])          = Filter One
 simStep (PSeq [f])         = simStep f
 simStep (PSeq fs)          | Filter Zero `elem` fs = Filter Zero
-                           | otherwise     = PSeq (nub $ map simStep (filter (Filter One /=) fs))
-                           -- FIXME: nubbing here seems dangerous to me.
+                           | otherwise     = PSeq (map simStep (filter (Filter One /=) fs))
 simStep (PCup [])          = Filter Zero
 simStep (PCup [f])         = simStep f
 simStep (PCup fs)          | Filter One `elem` fs = Filter One
                            | otherwise     = PCup (nub $ map simStep (filter (Filter Zero /=) fs))
 simStep (Star f)           = Star (simStep f)
-simStep (Merge f s)        = Merge f s
+
+withoutMult :: String -> [String] -> String
+withoutMult = foldl without
+
+without :: String -> String -> String
+without orig needle
+  | take (length needle) orig == needle = drop (length needle) orig `without` needle
+  | otherwise = case orig of
+    []     -> []
+    (x:xs) -> x : xs `without` needle

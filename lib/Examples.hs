@@ -1,4 +1,5 @@
 module Examples where
+
 import Datatypes
 
 -- hardcoded example netkat model
@@ -42,22 +43,32 @@ examplemoreagents = [("ag", S a),("pt", P (Port 16)),("S" , LS []), ("N", LS [])
                   ("Na", LS [a,b]), ("Nb", LS [b,c]), ("Nc", LS [c,d]), ("Nd", LS [b,d]),
                   ("call", ST "")]
 
+-- examples of gossip graphs with two agents
+
+gossipExampleTwo:: GossipGraph
+gossipExampleTwo = [ (a,([a,b],[a]))
+                   , (b,([b],[b])) ]
+
+gossipExampleTwoBoring:: GossipGraph
+gossipExampleTwoBoring = [ (a,([a],[a]))
+                         , (b,([b],[b])) ]
 
 -- examples of gossip graphs with three agents
+
 gossipExample:: GossipGraph
 gossipExample = [ (a,([a,b],[a]))
                 , (b,([b,c],[b]))
                 , (c,([c],[c])) ]
 
-gossipExampleFour:: GossipGraph
-gossipExampleFour = [ (a,([a,b],[a]))
-                    , (b,([b,c],[b]))
-                    , (c,([c,d],[c]))
-                    , (d, ([d],[d])) ]
+succExample:: GossipGraph
+succExample = [ (a,([a,b,c],[a]))
+              , (b,([b],[b]))
+              , (c,([c],[c])) ]
 
-gossipExample4:: GossipGraph
-gossipExample4 = [ (a,([a,b],[a]))
-                , (b,([b],[b]))]
+weakExample:: GossipGraph
+weakExample = [ (a,([a,b],[a]))
+              , (b,([b,c],[b]))
+              , (c,([c],[c])) ]
 
 gossipExample2:: GossipGraph
 gossipExample2 = [ (a,([a,b],[a]))
@@ -68,3 +79,11 @@ gossipExample3:: GossipGraph
 gossipExample3 = [ (a,([a,c],[a]))
                  , (b,([b,c],[b]))
                  , (c,([c],[c])) ]
+
+-- examples of gossip graphs with four agents
+
+gossipExampleFour:: GossipGraph
+gossipExampleFour = [ (a,([a,b],[a]))
+                    , (b,([b,c],[b]))
+                    , (c,([c,d],[c]))
+                    , (d, ([d],[d])) ]

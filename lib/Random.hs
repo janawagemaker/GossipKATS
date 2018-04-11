@@ -13,12 +13,14 @@ subGraphWith as t = [ (i,(s `cap` as, n `cap` as)) | (i,(s,n)) <- t, i `elem` as
 
 instance Arbitrary ArbGossipGraph where
   arbitrary = do
-    let ags = map Switch [0..2]
+    -- make size 3 more probable than size 4
+    n <- frequency [(10, return 3),(1, return 4)]
+    let ags = map Switch $ take n [0..]
     t <- mapM (\i -> do
       n' <- sublistOf (ags \\ [i])
-      let n = sort $ i : n'
-      let s = [i]
-      return (i,(n,s))) ags
+      let numbers = sort $ i : n'
+      let secrets = [i]
+      return (i,(numbers,secrets))) ags
     return $ ArbGG t
 
 unpack :: ArbGossipGraph -> GossipGraph

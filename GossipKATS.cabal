@@ -12,9 +12,11 @@ library
                   , random
                   , graphviz
                   , QuickCheck
+                  , process
   exposed-modules:  NetKAT
                   , GossipNetKAT
                   , GossipExplicit
+                  , GossipFrenetic
                   , Datatypes
                   , Visual
                   , Examples

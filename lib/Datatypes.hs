@@ -1,4 +1,5 @@
 module Datatypes where
+
 import Data.List
 
 -- types and constants for NetKAT
@@ -21,10 +22,9 @@ data NetKATM = Mo
     [(Host,Port)] deriving (Eq,Show)
 
 type Field = String
-data Value = S Switch | LS [Switch] | P Port | ST String | LC Sequence deriving (Eq,Ord,Show)
+data Value = I Int | S Switch | LS [Switch] | P Port | ST String | LC Sequence deriving (Eq,Ord,Show)
 type Packet = [(Field,Value)]
 type Element = Switch
-type Item = (Switch,([Switch],[Switch])) -- (agent,(N-Relation,S-Relation))
 
 instance Show Switch where
     show (Switch 0) = "a";
@@ -36,7 +36,6 @@ instance Show Switch where
 data Predicate = One
                  | Zero
                  | Test Field Value
-                 | TestEl Field Element
                  | Cup [Predicate]
                  | Seq [Predicate]
                  | Neg Predicate
@@ -48,30 +47,41 @@ data Policy = Filter Predicate
               | PCup [Policy]
               | PSeq [Policy]
               | Star Policy
-              | Merge Field Field
               deriving (Eq, Ord)
 
+-- If ... then ... (else do nothing) for binary NetKAT fields
+ifthen :: Field -> Policy -> Policy
+ifthen field thenPol = PCup [ PSeq [ Filter (Test field (I 1)), thenPol ]
+                            , Filter (Test field (I 0)) ]
+
+ppValue :: Value -> String
+ppValue (I n)          = show n
+ppValue (S (Switch n)) = show n
+ppValue (LS ls)        = show ls
+ppValue (P (Port n))   = show n
+ppValue (ST s)         = s
+ppValue (LC calls)     = show calls
+
 instance Show Predicate where
-    show One = "one"
-    show Zero = "zero"
-    show (Test field value) = field ++ " = " ++ show value
-    show (TestEl field element) = show element ++ " ∈ " ++ field
-    show (Cup xs) = intercalate " + " (map show xs)
-    show (Seq xs) = intercalate " • " (map show xs)
-    show (Neg x) = "¬" ++ " (" ++ show x ++ ")"
+  show One = "id"
+  show Zero = "drop"
+  show (Test field value) = field ++ "=" ++ ppValue value
+  show (Cup xs) = "(" ++ intercalate "+" (map show xs) ++ ")"
+  show (Seq xs) = "(" ++ intercalate ";" (map show xs) ++ ")"
+  show (Neg x) = "¬" ++ "(" ++ show x ++ ")"
 
 instance Show Policy where
-   show (Filter predi) = show predi
-   show (Mod field value) = field ++ " ← " ++ show value
-   show (Add field value) = field ++ " ←+ " ++ show value
-   show (PCup xs) = intercalate " + " (map show xs)
-   show (PSeq xs) = "(" ++ intercalate " • " (map show xs) ++ ")"
-   show (Star x) = show x ++ "*"
-   show (Merge field switch) = "Merge (" ++ field ++ " , " ++ show switch ++ ")"
+  show (Filter predi) = show predi
+  show (Mod field value) = field ++ ":=" ++ ppValue value
+  show (Add field value) = field ++ " ←+ " ++ ppValue value
+  show (PCup xs) = "(" ++ intercalate "+" (map show xs) ++ ")"
+  show (PSeq xs) = "(" ++ intercalate ";" (map show xs) ++ ")"
+  show (Star x) = show x ++ "*"
 
 -- types for dynamic gossip
 
 type Agent = Switch
 type GossipGraph = [Item]
-type Call = (Switch,Switch)
+type Item = (Agent,([Agent],[Agent])) -- (agent,(N-Relation,S-Relation))
+type Call = (Agent,Agent)
 type Sequence = [Call]
